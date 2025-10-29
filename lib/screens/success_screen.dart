@@ -5,8 +5,9 @@ import 'package:confetti/confetti.dart';
 // Tha Big Confetti Celebration
 class SuccessScreen extends StatefulWidget {
   final String userName;
+  final String avatarEmoji;
 
-  const SuccessScreen({super.key, required this.userName});
+  const SuccessScreen({super.key, required this.userName, required this.avatarEmoji,});
 
   @override
   State<SuccessScreen> createState() => _SuccessScreenState();
@@ -127,6 +128,15 @@ class _SuccessScreenState extends State<SuccessScreen> {
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ),
+                  CircleAvatar(
+                    radius: 42,
+                    backgroundColor: Colors.deepPurple.shade100,
+                    child: Text(
+                      widget.avatarEmoji,
+                      style: const TextStyle(fontSize: 36),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
