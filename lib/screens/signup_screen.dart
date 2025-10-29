@@ -20,6 +20,10 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isPasswordVisible = false;
   bool _isLoading = false;
 
+  double _pwdStrength = 0.0;
+  Color _pwdColor = Colors.red;
+  String _pwdLabel = 'Weak';
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -28,6 +32,31 @@ class _SignupScreenState extends State<SignupScreen> {
     _dobController.dispose();
     super.dispose();
   }
+
+  // simple strength calculator
+  void _onPasswordChanged(String v) {         
+    int score = 0;                            
+    if (v.length >= 6) score++;               
+    if (v.length >= 10) score++;              
+    if (RegExp(r'[A-Z]').hasMatch(v)) score++;
+    if (RegExp(r'[0-9]').hasMatch(v)) score++;
+    if (RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(v)) score++;
+                                               
+    double s = score / 5.0;                   
+    Color c;                                  
+    String label;                             
+    if (score <= 1) { c = Colors.red; label = 'Weak'; }              
+    else if (score == 2) { c = Colors.orange; label = 'Fair'; }      
+    else if (score == 3) { c = Colors.amber; label = 'Okay'; }       
+    else if (score == 4) { c = Colors.lightGreen; label = 'Good'; }  
+    else { c = Colors.green; label = 'Strong'; }                     
+
+    setState(() {                                
+      _pwdStrength = s;                          
+      _pwdColor = c;                             
+      _pwdLabel = label;                         
+    });                                          
+  }                                              
 
   // Date Picker Function
   Future<void> _selectDate() async {
@@ -174,6 +203,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
+                  onChanged: _onPasswordChanged,
                   decoration: InputDecoration(
                     labelText: 'Secret Password',
                     prefixIcon:
@@ -207,6 +237,28 @@ class _SignupScreenState extends State<SignupScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 30),
+
+                const SizedBox(height: 10),
+                // linear strength meter + label
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    minHeight: 10,
+                    value: _pwdStrength, // 0..1
+                    backgroundColor: Colors.grey[300],
+                    valueColor: AlwaysStoppedAnimation<Color>(_pwdColor),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    _pwdLabel,
+                    style: TextStyle(color: _pwdColor, fontWeight: FontWeight.w600),
+                  ),
+                ),
+
                 const SizedBox(height: 30),
 
                 // Avatar Picker
