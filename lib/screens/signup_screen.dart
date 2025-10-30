@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'success_screen.dart'; // Import for navigation
+import 'package:flutter/services.dart';
 
 // Signup Screen w/ Interactive Form
 class SignupScreen extends StatefulWidget {
@@ -48,6 +49,21 @@ class _SignupScreenState extends State<SignupScreen> {
     _passwordController.dispose();
     _dobController.dispose();
     super.dispose();
+  }
+
+  // Bounce checkmark helper
+  Widget _validCheck(bool isValid) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 200),
+      tween: Tween(begin: 0, end: isValid ? 1 : 0),
+      builder: (_, s, __) => Transform.scale(
+        scale: 0.8 + 0.2 * s,
+        child: Opacity(
+          opacity: s,
+          child: const Icon(Icons.check_circle, color: Colors.green),
+        ),
+      ),
+    );
   }
 
   // simple strength calculator
@@ -111,7 +127,8 @@ class _SignupScreenState extends State<SignupScreen> {
   }                                                           
 
   // Tiny celebratory animation 
-  void _triggerCelebrate() async {                             
+  void _triggerCelebrate() async {    
+    HapticFeedback.mediumImpact();                         
     setState(() => _celebrateScale = 1.0);                     
     await Future.delayed(const Duration(milliseconds: 700));   
     if (mounted) setState(() => _celebrateScale = 0.0);        
@@ -278,6 +295,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     }
                     return null;
                   },
+                  isValid: (v) => v.trim().isNotEmpty,
                 ),
                 const SizedBox(height: 20),
 
@@ -295,6 +313,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     }
                     return null;
                   },
+                  isValid: (v) => v.contains('@') && v.contains('.'),
                 ),
                 const SizedBox(height: 20),
 
@@ -303,6 +322,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   controller: _dobController,
                   readOnly: true,
                   onTap: _selectDate,
+                  onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     labelText: 'Date of Birth',
                     prefixIcon:
@@ -312,9 +332,15 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     filled: true,
                     fillColor: Colors.grey[50],
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.date_range),
-                      onPressed: _selectDate,
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.date_range),
+                          onPressed: _selectDate,
+                        ),
+                        _validCheck(_dobController.text.isNotEmpty),
+                      ],
                     ),
                   ),
                   validator: (value) {
@@ -330,7 +356,10 @@ class _SignupScreenState extends State<SignupScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
-                  onChanged: _onPasswordChanged,
+                  onChanged: (v) {
+                    _onPasswordChanged(v);
+                    setState(() {});
+                  },
                   decoration: InputDecoration(
                     labelText: 'Secret Password',
                     prefixIcon:
@@ -340,7 +369,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     filled: true,
                     fillColor: Colors.grey[50],
-                    suffixIcon: IconButton(
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
                       icon: Icon(
                         _isPasswordVisible
                             ? Icons.visibility
@@ -353,6 +385,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         });
                       },
                     ),
+                    _validCheck(_passwordController.text.length >= 6),
+                    ],
+                  ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -464,6 +499,7 @@ class _SignupScreenState extends State<SignupScreen> {
     required String label,
     required IconData icon,
     required String? Function(String?) validator,
+    bool Function(String)? isValid,
   }) {
     return TextFormField(
       controller: controller,
@@ -475,6 +511,9 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         filled: true,
         fillColor: Colors.grey[50],
+        suffixIcon: (isValid == null)
+            ? null
+            : _validCheck(isValid(controller.text)),
       ),
       validator: validator,
     );
