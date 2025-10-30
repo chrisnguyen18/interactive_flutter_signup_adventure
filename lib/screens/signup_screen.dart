@@ -56,6 +56,27 @@ class _SignupScreenState extends State<SignupScreen> {
       _pwdColor = c;                             
       _pwdLabel = label;                         
     });                                          
+  }
+  // badge rules creator
+  List<String> _computeBadges() {
+    final List<String> badges = [];
+    // Strong Password achievment
+    if (_pwdLabel == 'Strong' || _pwdStrength >= 0.8) {
+      badges.add('🏆 Strong Password Master');
+    }
+    // Sign up before 12 PM achievment
+    final now = DateTime.now();
+    if (now.hour < 12) {
+      badges.add('⏰ The Early Bird Special');
+    }
+    // Profile Completer achievment
+    if (_nameController.text.trim().isNotEmpty &&
+        _emailController.text.trim().isNotEmpty &&
+        _passwordController.text.isNotEmpty &&
+        _dobController.text.trim().isNotEmpty) {
+      badges.add('✅ Profile Completer');
+    }
+    return badges;
   }                                              
 
   // Date Picker Function
@@ -85,12 +106,13 @@ class _SignupScreenState extends State<SignupScreen> {
         setState(() {
           _isLoading = false;
         });
+        final badges = _computeBadges();
 
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => SuccessScreen(userName: _nameController.text,
-            avatarEmoji: _avatars[_selected],),
+            avatarEmoji: _avatars[_selected], badges: badges,),
           ),
         );
       });
