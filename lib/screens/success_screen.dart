@@ -6,8 +6,9 @@ import 'package:confetti/confetti.dart';
 class SuccessScreen extends StatefulWidget {
   final String userName;
   final String avatarEmoji;
+  final List<String> badges; 
 
-  const SuccessScreen({super.key, required this.userName, required this.avatarEmoji,});
+  const SuccessScreen({super.key, required this.userName, required this.avatarEmoji,required this.badges,});
 
   @override
   State<SuccessScreen> createState() => _SuccessScreenState();
@@ -107,6 +108,19 @@ class _SuccessScreenState extends State<SuccessScreen> {
                     'Your adventure begins now!',
                     style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
+                  
+                  // Badges Section
+                  if (widget.badges.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: widget.badges.map((b) => Chip(
+                        label: Text(b),
+                        backgroundColor: Colors.deepPurple.shade50,
+                      )).toList(),
+                    ),
+                  ],
 
                   const SizedBox(height: 50),
 
