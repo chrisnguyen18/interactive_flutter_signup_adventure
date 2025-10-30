@@ -24,6 +24,23 @@ class _SignupScreenState extends State<SignupScreen> {
   Color _pwdColor = Colors.red;
   String _pwdLabel = 'Weak';
 
+  // Adventure Progress Tracker
+  double _progress = 0.0;
+  Color _progressColor = Colors.red;
+  String _milestoneMsg = '';
+  double _celebrateScale = 0.0;
+  int _lastMilestone = 0;
+
+  @override
+  void initState() {                                    
+    super.initState();                                  
+    // Watch fields to update progress in real time      
+    _nameController.addListener(_recomputeProgress);    
+    _emailController.addListener(_recomputeProgress);   
+    _passwordController.addListener(_recomputeProgress);
+    _dobController.addListener(_recomputeProgress);     
+  }                                                     
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -55,8 +72,51 @@ class _SignupScreenState extends State<SignupScreen> {
       _pwdStrength = s;                          
       _pwdColor = c;                             
       _pwdLabel = label;                         
-    });                                          
+    });   
+    _recomputeProgress();                                       
   }
+
+  void _recomputeProgress() {                            
+    int filled = 0;                                      
+    if (_nameController.text.trim().isNotEmpty) filled++;
+    if (_emailController.text.trim().isNotEmpty) filled++;
+    if (_passwordController.text.isNotEmpty) filled++;   
+    if (_dobController.text.trim().isNotEmpty) filled++; 
+
+    final newProgress = filled / 4.0;                    
+    final newColor = Color.lerp(Colors.red, Colors.green, newProgress)!; 
+
+    // Determine current milestone                            
+    int m = 0;                                               
+    if (newProgress >= 1.0) m = 100;                         
+    else if (newProgress >= 0.75) m = 75;                    
+    else if (newProgress >= 0.50) m = 50;                    
+    else if (newProgress >= 0.25) m = 25;                    
+
+    String msg = '';                                         
+    if (m > _lastMilestone) {                                
+      if (m == 25) msg = 'Nice start! 25% complete 🎯';      
+      if (m == 50) msg = 'Halfway there! 50% 🚀';            
+      if (m == 75) msg = 'So close! 75% 🔥';                 
+      if (m == 100) msg = 'All done! 100% 🎉';               
+      _triggerCelebrate();                                    
+    }                                                         
+
+    setState(() {                                             
+      _progress = newProgress;                                
+      _progressColor = newColor;                              
+      _milestoneMsg = msg;                                    
+      _lastMilestone = m;                                     
+    });                                                       
+  }                                                           
+
+  // Tiny celebratory animation 
+  void _triggerCelebrate() async {                             
+    setState(() => _celebrateScale = 1.0);                     
+    await Future.delayed(const Duration(milliseconds: 700));   
+    if (mounted) setState(() => _celebrateScale = 0.0);        
+  }                                                            
+
   // badge rules creator
   List<String> _computeBadges() {
     final List<String> badges = [];
@@ -91,6 +151,7 @@ class _SignupScreenState extends State<SignupScreen> {
       setState(() {
         _dobController.text = "${picked.day}/${picked.month}/${picked.year}";
       });
+      _recomputeProgress(); 
     }
   }
 
@@ -134,6 +195,50 @@ class _SignupScreenState extends State<SignupScreen> {
             key: _formKey,
             child: Column(
               children: [
+                // Progress Bar (top of form)
+                ClipRRect(                                           
+                  borderRadius: BorderRadius.circular(8),            
+                  child: LinearProgressIndicator(                    
+                    minHeight: 12,                                   
+                    value: _progress,                                
+                    backgroundColor: Colors.grey[300],               
+                    valueColor: AlwaysStoppedAnimation(_progressColor), 
+                  ),
+                ),                                                   
+                const SizedBox(height: 8),                           
+                Row(                                                 
+                  children: [                                        
+                    const Text('Adventure Progress'),                
+                    const Spacer(),                                  
+                    Text('${(_progress * 100).round()}%'),           
+                  ],                                                 
+                ),                                                   
+                const SizedBox(height: 8),                           
+                Stack(                                               
+                  alignment: Alignment.centerRight,                  
+                  children: [                                        
+                    if (_milestoneMsg.isNotEmpty)                    
+                      Align(                                         
+                        alignment: Alignment.centerLeft,             
+                        child: Text(                                 
+                          _milestoneMsg,                             
+                          style: const TextStyle(                    
+                            fontWeight: FontWeight.w600,             
+                            color: Colors.deepPurple,                
+                          ),                                         
+                        ),                                           
+                      ),                                             
+                    AnimatedScale(                                   
+                      scale: _celebrateScale,                        
+                      duration: const Duration(milliseconds: 250),   
+                      child: const Icon(Icons.emoji_events,          
+                          color: Colors.amber, size: 28),            
+                    ),                                               
+                  ],                                                 
+                ),                                                   
+
+                const SizedBox(height: 16),                          
+
                 // Animated Form Header
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 500),
